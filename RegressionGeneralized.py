@@ -12,6 +12,7 @@ from Pattern import Pattern
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from matplotlib.backends.backend_pdf import PdfPages
+from PatternStore import addPattern
 
 def formQuery(fixed, variable, value, tableName):
     
@@ -91,15 +92,13 @@ def fitRegressionModel(dictFixed, fixed, variable, value):
         
         if(slopeLR > 0 and scoreLR > 0.7):
             validPatterns = validPatterns + 1
-            pattern = Pattern(fixed, fixedVar, variable, value, 'increasing', scoreLR)
-            #storePattern(pattern)
+            addPattern(fixed, fixedVar, variable, value, 'increasing', scoreLR)
             
         elif(slopeLR < 0 and scoreLR > 0.7):
             validPatterns = validPatterns + 1
-            pattern = Pattern(fixed, fixedVar, variable, value, 'decreasing', scoreLR)
-            #storePattern(pattern)
-      
+            addPattern(fixed, fixedVar, variable, value, 'decreasing', scoreLR)
+                  
         #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
     
-    Pattern(fixed, "none", variable, value, "none", (validPatterns * 100 / len(dictFixed)))
+    addPattern(fixed, "none", variable, value, "none", (validPatterns * 100 / len(dictFixed)))
         

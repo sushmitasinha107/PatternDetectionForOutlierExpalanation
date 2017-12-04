@@ -2,6 +2,10 @@ import sys
 import psycopg2
 import Clustering
 import RegressionGeneralized as reg
+from sqlalchemy import create_engine
+
+engine = None
+conn = None
 
 class PatternFinder:
     categories = None
@@ -13,18 +17,29 @@ class PatternFinder:
 
     def __init__(self, time, categories, dimensions, values, data):
         try:
+            global conn
             conn = psycopg2.connect(dbname='postgres', user='postgres',
                                     host='localhost', password='postgres')
         except psycopg2.DatabaseError as ex:
             print(ex)
             sys.exit(1)
+
+        try:
+            global engine
+            engine = create_engine(
+                'postgresql://postgres:postgres@localhost:5432/postgres',
+                echo=True)
+        except Exception as ex:
+            print(ex)
+            sys.exit(1)
+
         self.cursor = conn.cursor()
         self.data = data
         self.categories = categories
 
         #for testing
-        #self.values = values
-        #self.dimensions = dimensions+time
+        # self.values = values
+        # self.dimensions = dimensions+time
         #for testing
 
         #org
@@ -78,14 +93,18 @@ class PatternFinder:
                 self.patternList.append(self.findConstant(f, v, val)
                                         for val in self.values)
 
+        #close all database connections
+        global engine
+        engine.dispose()
+        conn.close()
+
+
     def findRegressions(self, fixed, variable, value):
-        
         query = reg.formQuery(fixed, variable, value, self.data)
         self.cursor.execute(query)
                 
         dictFixed = {}
         reg.formDictionary(self.cursor, dictFixed)
-        
         reg.fitRegressionModel(dictFixed, fixed, variable, value)
         return []
 

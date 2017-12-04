@@ -15,4 +15,4 @@ dimensions = []
 categories = ["ticker"]
 p = PatternFinder(time, categories, dimensions, values, "stock")
 
-p.findPatterns()
+# p.findPatterns()
