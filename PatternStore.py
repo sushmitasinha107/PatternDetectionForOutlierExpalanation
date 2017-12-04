@@ -8,7 +8,7 @@ Base = declarative_base()
 #                        , echo=True)
 
 class Pattern(Base):
-    __tablename__ = 'Patterns'
+    __tablename__ = 'patterns'
     id = Column(Integer, primary_key=True, autoincrement=True)
     fixed = Column(String)
     fixedvalue = Column(String)

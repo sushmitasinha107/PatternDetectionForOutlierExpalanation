@@ -13,13 +13,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from matplotlib.backends.backend_pdf import PdfPages
 from PatternStore import addPattern
+import PatternFinder as pf
 
 def formQuery(fixed, variable, aggFunc, value, tableName):
     
-    query = "SELECT " + fixed + ", " + variable + ", avg(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
+    query = "SELECT " + fixed + ", " + variable + ", avg(" + value + ") FROM " + tableName  +\
             " GROUP BY " + fixed + ", " + variable + " ORDER BY " + variable
     
-    print('Query::', query)
+    #print('Query::', query)
 
     return query
 
@@ -55,7 +56,9 @@ def plotLinearRegression(x, y, yPltLR, scoreLR, fixed):
     plt.plot(x, yPltLR, color='navy', linewidth=lw, label='Linear Regressor')
     
     plt.legend(loc='lower right')
-    plt.show()
+    #plt.show()
+    
+    pf.pdf.savefig(fig)
     
     return
 
@@ -93,12 +96,14 @@ def fitRegressionModel(dictFixed, fixed, variable, aggFunc, value):
         if(slopeLR > 0 and scoreLR > 0.7):
             validPatterns = validPatterns + 1
             addPattern(fixed, fixedVar, variable, aggFunc, value, 'increasing', scoreLR)
+            #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
             
         elif(slopeLR < 0 and scoreLR > 0.7):
             validPatterns = validPatterns + 1
             addPattern(fixed, fixedVar, variable, aggFunc, value, 'decreasing', scoreLR)
+            #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
                   
-        #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
+        
     
     addPattern(fixed, "none", variable, aggFunc, value, "none", (validPatterns * 100 / len(dictFixed)))
         

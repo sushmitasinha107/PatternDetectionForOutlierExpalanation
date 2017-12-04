@@ -3,9 +3,12 @@ import psycopg2
 import Clustering
 import RegressionGeneralized as reg
 from sqlalchemy import create_engine
+from matplotlib.backends.backend_pdf import PdfPages
+
 
 engine = None
 conn = None
+pdf = PdfPages('PatternsStock.pdf')
 
 class PatternFinder:
     categories = None
@@ -28,7 +31,7 @@ class PatternFinder:
             global engine
             engine = create_engine(
                 'postgresql://postgres:postgres@localhost:5432/postgres',
-                echo=True)
+                echo=False)
         except Exception as ex:
             print(ex)
             sys.exit(1)
@@ -38,10 +41,11 @@ class PatternFinder:
         self.categories = categories
 
         #for testing
-        # self.values = values
-        # self.dimensions = dimensions+time
+        self.values = values
+        self.dimensions = dimensions+time
         #for testing
-
+        
+        '''
         #org
         reduced_dimensions, reduced_values = Clustering.heatMap(dimensions ,  values )
         print(reduced_dimensions)
@@ -51,6 +55,7 @@ class PatternFinder:
         self.dimensions = reduced_dimensions + time
         self.values = reduced_values
         #org
+        '''
 
         self.formDatacube()
 
@@ -97,6 +102,7 @@ class PatternFinder:
         global engine
         engine.dispose()
         conn.close()
+        pdf.close()
 
 
     def findRegressions(self, fixed, variable, aggFunc, value):
