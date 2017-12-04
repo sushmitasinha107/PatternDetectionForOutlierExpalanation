@@ -81,15 +81,12 @@ class PatternFinder:
     def findRegressions(self, fixed, variable, value):
         
         query = reg.formQuery(fixed, variable, value, self.data)
-        print (query)
         self.cursor.execute(query)
-        
-        print(self.cursor.rowcount)
-        
+                
         dictFixed = {}
         reg.formDictionary(self.cursor, dictFixed)
         
-        reg.fitRegressionModel(dictFixed)
+        reg.fitRegressionModel(dictFixed, fixed, variable, value)
         return []
 
     def findConstants(self, fixed, variable, value):
@@ -139,4 +136,4 @@ class PatternFinder:
         # self.cursor.execute(query_insert)
 
 
-
+        
