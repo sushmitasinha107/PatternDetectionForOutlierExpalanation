@@ -8,10 +8,8 @@ Created on Wed Nov 22 16:05:11 2017
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Pattern import Pattern
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-from matplotlib.backends.backend_pdf import PdfPages
 from PatternStore import addPattern
 import PatternFinder as pf
 
