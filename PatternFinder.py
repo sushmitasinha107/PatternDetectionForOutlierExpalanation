@@ -36,6 +36,7 @@ class PatternFinder:
             print(ex)
             sys.exit(1)
 
+        
         self.cursor = conn.cursor()
         self.data = data
         self.categories = categories
@@ -44,10 +45,10 @@ class PatternFinder:
         self.values = values
         self.dimensions = dimensions+time
         #for testing
-        
+    
         '''
-        #org
-        global conn
+        #org begin
+        
         reduced_dimensions, reduced_values = Clustering.Cluster(dimensions,
                                                                 values,
                                                                 self.data,
@@ -58,7 +59,7 @@ class PatternFinder:
         
         self.dimensions = reduced_dimensions + time
         self.values = reduced_values
-        #org
+        #org end
         '''
 
         self.formDatacube()
@@ -75,17 +76,23 @@ class PatternFinder:
                                             for val in self.values)
 
             #dimensions in variable
+            '''
             for v in self.dimensions:
                 for val in self.values:
                     self.findRegressions(f, v, "avg",val) 
-                    
+            '''
+            
+            v = ['month', 'day']
+            f = ['ticker', 'year']
+            for val in self.values:
+                self.findRegressions(f, v, "avg", val)
                                     
-                '''
-                self.patternList.append(self.findRegressions(f, v, val)
+            '''
+            self.patternList.append(self.findRegressions(f, v, val)
                                         for val in self.values)
-                self.patternList.append(self.findConstants(f, v, val)
+            self.patternList.append(self.findConstants(f, v, val)
                                         for val in self.values)
-                '''
+            '''
 
         #dimensions as fixed
         for f in self.dimensions:
@@ -114,7 +121,7 @@ class PatternFinder:
         self.cursor.execute(query)
                 
         dictFixed = {}
-        reg.formDictionary(self.cursor, dictFixed)
+        reg.formDictionary(self.cursor, dictFixed, fixed, variable)
         reg.fitRegressionModel(dictFixed, fixed, variable, aggFunc, value)
         return []
 
