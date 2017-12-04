@@ -1,5 +1,6 @@
 import sys
 import psycopg2
+import PatternStore
 import Clustering
 import RegressionGeneralized as reg
 from sqlalchemy import create_engine
@@ -31,7 +32,7 @@ class PatternFinder:
             global engine
             engine = create_engine(
                 'postgresql://postgres:postgres@localhost:5432/postgres',
-                echo=False)
+                echo=True)
         except Exception as ex:
             print(ex)
             sys.exit(1)
@@ -45,10 +46,11 @@ class PatternFinder:
         self.values = values
         self.dimensions = dimensions+time
         #for testing
+
     
         '''
         #org begin
-        
+        global conn
         reduced_dimensions, reduced_values = Clustering.Cluster(dimensions,
                                                                 values,
                                                                 self.data,
@@ -61,7 +63,8 @@ class PatternFinder:
         self.values = reduced_values
         #org end
         '''
-
+        
+        PatternStore.create_table_object(self.data)
         self.formDatacube()
 
     def findPatterns(self):
@@ -79,6 +82,7 @@ class PatternFinder:
             '''
             for v in self.dimensions:
                 for val in self.values:
+
                     self.findRegressions(f, v, "avg",val) 
             '''
             
@@ -86,7 +90,9 @@ class PatternFinder:
             f = ['ticker', 'year']
             for val in self.values:
                 self.findRegressions(f, v, "avg", val)
-                                    
+
+                    
+                                                        
             '''
             self.patternList.append(self.findRegressions(f, v, val)
                                         for val in self.values)
