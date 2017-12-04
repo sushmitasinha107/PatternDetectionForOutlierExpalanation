@@ -73,6 +73,7 @@ def formDictionary(curs, dictFixed):
 
 def fitRegressionModel(dictFixed, fixed, variable, value):
     
+    validPatterns = 0
     for fixedVar, plotData in dictFixed.items():
     
         x = []
@@ -89,13 +90,16 @@ def fitRegressionModel(dictFixed, fixed, variable, value):
         slopeLR, rmseLR, yPltLR, scoreLR = performLinearRegression(x, y, r)
         
         if(slopeLR > 0 and scoreLR > 0.7):
+            validPatterns = validPatterns + 1
             pattern = Pattern(fixed, fixedVar, variable, value, 'increasing', scoreLR)
             #storePattern(pattern)
             
         elif(slopeLR < 0 and scoreLR > 0.7):
+            validPatterns = validPatterns + 1
             pattern = Pattern(fixed, fixedVar, variable, value, 'decreasing', scoreLR)
             #storePattern(pattern)
-            
-        
+      
         #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
+    
+    Pattern(fixed, "none", variable, value, "none", (validPatterns * 100 / len(dictFixed)))
         
