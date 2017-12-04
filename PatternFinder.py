@@ -68,7 +68,7 @@ class PatternFinder:
             #dimensions in variable
             for v in self.dimensions:
                 for val in self.values:
-                    self.findRegressions(f, v, val) 
+                    self.findRegressions(f, v, "avg",val) 
                     
                                     
                 '''
@@ -99,13 +99,13 @@ class PatternFinder:
         conn.close()
 
 
-    def findRegressions(self, fixed, variable, value):
-        query = reg.formQuery(fixed, variable, value, self.data)
+    def findRegressions(self, fixed, variable, aggFunc, value):
+        query = reg.formQuery(fixed, variable, aggFunc, value, self.data)
         self.cursor.execute(query)
                 
         dictFixed = {}
         reg.formDictionary(self.cursor, dictFixed)
-        reg.fitRegressionModel(dictFixed, fixed, variable, value)
+        reg.fitRegressionModel(dictFixed, fixed, variable, aggFunc, value)
         return []
 
     def findConstants(self, fixed, variable, value):

@@ -1,15 +1,15 @@
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import DECIMAL, Column, String
-from PatternFinder import engine
+from sqlalchemy import DECIMAL, Column, String, Integer
+import PatternFinder as pf
 
 Base = declarative_base()
 # engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres'
 #                        , echo=True)
 
 class Pattern(Base):
-    __tablename__ = 'patterns'
+    __tablename__ = 'Patterns'
+    id = Column(Integer, primary_key=True, autoincrement=True)
     fixed = Column(String)
     fixedvalue = Column(String)
     variable = Column(String)
@@ -21,9 +21,9 @@ class Pattern(Base):
 
 def addPattern(fixed, fixedvalue, variable, aggfunction, aggvalue,
                pattern, metric):
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(pf.engine)
 
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(bind=pf.engine)
     session = Session()
     new_pattern = Pattern(fixed=fixed, fixedvalue=fixedvalue,
                           variable=variable, aggfunction=aggfunction,

@@ -14,7 +14,7 @@ from sklearn.metrics import mean_squared_error
 from matplotlib.backends.backend_pdf import PdfPages
 from PatternStore import addPattern
 
-def formQuery(fixed, variable, value, tableName):
+def formQuery(fixed, variable, aggFunc, value, tableName):
     
     query = "SELECT " + fixed + ", " + variable + ", avg(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
             " GROUP BY " + fixed + ", " + variable + " ORDER BY " + variable
@@ -72,7 +72,7 @@ def formDictionary(curs, dictFixed):
         dictFixed[fixed][variable] = float(agg)
 
 
-def fitRegressionModel(dictFixed, fixed, variable, value):
+def fitRegressionModel(dictFixed, fixed, variable, aggFunc, value):
     
     validPatterns = 0
     for fixedVar, plotData in dictFixed.items():
@@ -92,13 +92,13 @@ def fitRegressionModel(dictFixed, fixed, variable, value):
         
         if(slopeLR > 0 and scoreLR > 0.7):
             validPatterns = validPatterns + 1
-            addPattern(fixed, fixedVar, variable, value, 'increasing', scoreLR)
+            addPattern(fixed, fixedVar, variable, aggFunc, value, 'increasing', scoreLR)
             
         elif(slopeLR < 0 and scoreLR > 0.7):
             validPatterns = validPatterns + 1
-            addPattern(fixed, fixedVar, variable, value, 'decreasing', scoreLR)
+            addPattern(fixed, fixedVar, variable, aggFunc, value, 'decreasing', scoreLR)
                   
         #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
     
-    addPattern(fixed, "none", variable, value, "none", (validPatterns * 100 / len(dictFixed)))
+    addPattern(fixed, "none", variable, aggFunc, value, "none", (validPatterns * 100 / len(dictFixed)))
         
