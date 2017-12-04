@@ -4,6 +4,9 @@ import Clustering
 import RegressionGeneralized as reg
 from sqlalchemy import create_engine
 
+engine = None
+conn = None
+
 class PatternFinder:
     categories = None
     dimensions = None
@@ -11,10 +14,10 @@ class PatternFinder:
     patternList = []
     cursor = None
     data = None
-    engine = None
 
     def __init__(self, time, categories, dimensions, values, data):
         try:
+            global conn
             conn = psycopg2.connect(dbname='postgres', user='postgres',
                                     host='localhost', password='postgres')
         except psycopg2.DatabaseError as ex:
@@ -22,7 +25,8 @@ class PatternFinder:
             sys.exit(1)
 
         try:
-            self.engine = create_engine(
+            global engine
+            engine = create_engine(
                 'postgresql://postgres:postgres@localhost:5432/postgres',
                 echo=True)
         except Exception as ex:
@@ -89,18 +93,19 @@ class PatternFinder:
                 self.patternList.append(self.findConstant(f, v, val)
                                         for val in self.values)
 
+        #close all database connections
+        global engine
+        engine.dispose()
+        conn.close()
+
+
     def findRegressions(self, fixed, variable, value):
-        
-        # query = reg.formQuery(fixed, variable, value, self.data)
-        # print (query)
-        # self.cursor.execute(query)
-        #
-        # print(self.cursor.rowcount)
-        #
-        # dictFixed = {}
-        # reg.formDictionary(self.cursor, dictFixed)
-        #
-        # reg.fitRegressionModel(dictFixed)
+        query = reg.formQuery(fixed, variable, value, self.data)
+        self.cursor.execute(query)
+                
+        dictFixed = {}
+        reg.formDictionary(self.cursor, dictFixed)
+        reg.fitRegressionModel(dictFixed, fixed, variable, value)
         return []
 
     def findConstants(self, fixed, variable, value):
@@ -150,4 +155,4 @@ class PatternFinder:
         # self.cursor.execute(query_insert)
 
 
-
+        

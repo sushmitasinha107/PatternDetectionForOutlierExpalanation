@@ -1,12 +1,14 @@
 class Pattern:
     fixed = None
+    fixedValue = None
     variable = None
     value = None
     pattern = None
     metric = None
 
-    def __init__(self, fixed, variable, value, pattern, metric):
+    def __init__(self, fixed, fixedValue, variable, value, pattern, metric):
         self.fixed = fixed
+        self.fixedValue = fixedValue
         self.variable = variable
         self.value = value
         self.pattern = pattern
@@ -14,6 +16,9 @@ class Pattern:
 
     def get_fixed(self):
         return self.fixed
+    
+    def get_fixedValue(self):
+        return self.fixedValue
 
     def get_variable(self):
         return self.variable

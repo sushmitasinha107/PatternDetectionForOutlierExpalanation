@@ -1,8 +1,12 @@
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import DECIMAL, Column, String
+from PatternFinder import engine
 
 Base = declarative_base()
+# engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres'
+#                        , echo=True)
 
 class Pattern(Base):
     __tablename__ = 'patterns'
@@ -16,7 +20,7 @@ class Pattern(Base):
 
 
 def addPattern(fixed, fixedvalue, variable, aggfunction, aggvalue,
-               pattern, metric, engine):
+               pattern, metric):
     Base.metadata.create_all(engine)
 
     Session = sessionmaker(bind=engine)
