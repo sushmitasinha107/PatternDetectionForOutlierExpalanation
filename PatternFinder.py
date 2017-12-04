@@ -43,7 +43,11 @@ class PatternFinder:
         #for testing
 
         #org
-        reduced_dimensions, reduced_values = Clustering.heatMap(dimensions ,  values )
+        global conn
+        reduced_dimensions, reduced_values = Clustering.Cluster(dimensions,
+                                                                values,
+                                                                self.data,
+                                                                conn)
         print(reduced_dimensions)
         print(reduced_values)
         
