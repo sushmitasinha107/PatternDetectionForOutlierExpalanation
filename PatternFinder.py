@@ -1,6 +1,7 @@
 import sys
 import psycopg2
 import Clustering
+import RegressionGeneralized as reg
 
 class PatternFinder:
     categories = None
@@ -32,16 +33,18 @@ class PatternFinder:
         print(reduced_values)
         
         
-        self.dimensions = reduced_dimensions+time
+        self.dimensions = reduced_dimensions + time
         self.values = reduced_values
         #org
 
         self.formDatacube()
 
     def findPatterns(self):
-
+        
+        print('Dimension:: ', self.dimensions)
         #categories as fixed
         for f in self.categories:
+            
             #categories in variable
             for v in self.categories:
                     self.patternList.append(self.findConstant(f, v, val)
@@ -49,13 +52,20 @@ class PatternFinder:
 
             #dimensions in variable
             for v in self.dimensions:
+                for val in self.values:
+                    self.findRegressions(f, v, val) 
+                    
+                                    
+                '''
                 self.patternList.append(self.findRegressions(f, v, val)
                                         for val in self.values)
                 self.patternList.append(self.findConstants(f, v, val)
                                         for val in self.values)
+                '''
 
         #dimensions as fixed
         for f in self.dimensions:
+            
             # categories in variable
             for v in self.categories:
                 self.patternList.append(self.findConstant(f, v, val)
@@ -69,6 +79,17 @@ class PatternFinder:
                                         for val in self.values)
 
     def findRegressions(self, fixed, variable, value):
+        
+        query = reg.formQuery(fixed, variable, value, self.data)
+        print (query)
+        self.cursor.execute(query)
+        
+        print(self.cursor.rowcount)
+        
+        dictFixed = {}
+        reg.formDictionary(self.cursor, dictFixed)
+        
+        reg.fitRegressionModel(dictFixed)
         return []
 
     def findConstants(self, fixed, variable, value):

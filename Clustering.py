@@ -156,7 +156,7 @@ conn = psycopg2.connect(dbname='postgres', user='postgres',
                                     host='localhost', password='postgres')
 #df = pd.read_sql_query('select * from stock', con=conn)
 col = ['ticker', 'date', 'month', 'day', 'year','open', 'high', 'low', 'close', 'volume', 'ex-dividend', 'split_ratio', 'adj_open','adj_high', 'adj_low', 'adj_close', 'adj_volume']
-df  = pd.read_csv('/Users/sushmitasinha/Downloads/data5.csv', names=col) 
+df  = pd.read_csv('/Users/deeptichavan/Downloads/dataAll.csv', names=col) 
 
 df.select_dtypes(include=[np.number]).isnull().sum()
 df.replace('n/a', np.nan, inplace=True)
