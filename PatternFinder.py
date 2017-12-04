@@ -2,6 +2,7 @@ import sys
 import psycopg2
 import Clustering
 import RegressionGeneralized as reg
+from sqlalchemy import create_engine
 
 class PatternFinder:
     categories = None
@@ -10,6 +11,7 @@ class PatternFinder:
     patternList = []
     cursor = None
     data = None
+    engine = None
 
     def __init__(self, time, categories, dimensions, values, data):
         try:
@@ -18,13 +20,22 @@ class PatternFinder:
         except psycopg2.DatabaseError as ex:
             print(ex)
             sys.exit(1)
+
+        try:
+            self.engine = create_engine(
+                'postgresql://postgres:postgres@localhost:5432/postgres',
+                echo=True)
+        except Exception as ex:
+            print(ex)
+            sys.exit(1)
+
         self.cursor = conn.cursor()
         self.data = data
         self.categories = categories
 
         #for testing
-        #self.values = values
-        #self.dimensions = dimensions+time
+        # self.values = values
+        # self.dimensions = dimensions+time
         #for testing
 
         #org
@@ -80,16 +91,16 @@ class PatternFinder:
 
     def findRegressions(self, fixed, variable, value):
         
-        query = reg.formQuery(fixed, variable, value, self.data)
-        print (query)
-        self.cursor.execute(query)
-        
-        print(self.cursor.rowcount)
-        
-        dictFixed = {}
-        reg.formDictionary(self.cursor, dictFixed)
-        
-        reg.fitRegressionModel(dictFixed)
+        # query = reg.formQuery(fixed, variable, value, self.data)
+        # print (query)
+        # self.cursor.execute(query)
+        #
+        # print(self.cursor.rowcount)
+        #
+        # dictFixed = {}
+        # reg.formDictionary(self.cursor, dictFixed)
+        #
+        # reg.fitRegressionModel(dictFixed)
         return []
 
     def findConstants(self, fixed, variable, value):
