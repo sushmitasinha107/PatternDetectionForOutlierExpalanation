@@ -36,24 +36,35 @@ class PatternFinder:
         self.dimensions = reduced_dimensions + time
         self.values = reduced_values
         #org
-
         self.formDatacube()
 
     def findPatterns(self):
         
+        for f in self.categories:
+            #categories in variable
+            for val in self.values:
+                self.findConstants2(f, val) 
+        
+
+
+        
         print('Dimension:: ', self.dimensions)
         #categories as fixed
         for f in self.categories:
-            
             #categories in variable
             for v in self.categories:
-                    self.patternList.append(self.findConstant(f, v, val)
-                                            for val in self.values)
+                    #self.patternList.append(self.findConstant(f, v, val)
+                        #for val in self.values)
+                for val in self.values:
+                    self.findConstants(f, v, val)
 
             #dimensions in variable
             for v in self.dimensions:
                 for val in self.values:
+                    self.findConstants(f, v, val) 
                     self.findRegressions(f, v, val) 
+                    
+
                     
                                     
                 '''
@@ -82,14 +93,27 @@ class PatternFinder:
         
         query = reg.formQuery(fixed, variable, value, self.data)
         self.cursor.execute(query)
-                
+
         dictFixed = {}
         reg.formDictionary(self.cursor, dictFixed)
-        
         reg.fitRegressionModel(dictFixed, fixed, variable, value)
         return []
 
     def findConstants(self, fixed, variable, value):
+        query = Clustering.formQuery(fixed, variable, value, self.data)
+        self.cursor.execute(query)
+                
+        dictFixed = {}
+        Clustering.formDictionary(self.cursor, dictFixed)
+        Clustering.findConstants(dictFixed, fixed, variable, value)
+        return []
+    
+    def findConstants2(self, fixed, value):
+        query = Clustering.formQuery2(fixed, value, self.data)
+        self.cursor.execute(query)                
+        dictFixed = {}
+        Clustering.formDictionary2(self.cursor, dictFixed)
+        Clustering.findConstants2(dictFixed, fixed, value)
         return []
 
     def formDatacube(self):

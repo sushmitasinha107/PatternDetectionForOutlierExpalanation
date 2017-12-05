@@ -12,10 +12,11 @@ Spyder Editor
 
 This is a temporary script file.
 """
+from PatternStore import addPattern
 import pandas as pd 
 import numpy as np
 import psycopg2
-# import seaborn as sns
+import seaborn as sns
 # import scipy.stats as stats
 #
 # from scipy.stats import chi2
@@ -23,9 +24,8 @@ import psycopg2
 #
 # import matplotlib.pyplot as plt
 # ##import re
-
-import sklearn as sk
-import sklearn.tree as tree
+#import sklearn as sk
+#import sklearn.tree as tree
 from sklearn.cluster import KMeans
 
 # from IPython.display import Image
@@ -33,71 +33,87 @@ from sklearn.cluster import KMeans
 
 # from sklearn.tree import DecisionTreeRegressor
 
+def formDictionary(curs, dictFixed):
+    
+    for row in curs:
+        fixed = row[0]
+        variable = row[1]
+        mean = row[2]
+        stdev = row[3]
+        
+        if fixed not in dictFixed:
+            dictFixed[fixed] = {}
+       
+        dictFixed[fixed][variable] = float(stdev/mean)
 
+def formDictionary2(curs, dictFixed):
+    
+    for row in curs:
+        fixed = row[0]
+        mean = row[1]
+        stdev = row[2]
+        
+        if fixed not in dictFixed:
+            dictFixed[fixed] = {}
+       
+        dictFixed[fixed] = float(stdev/mean)
 
-def findCatCorrelation3(variable, value, fixedcategory, categoryvalues):
-    CategotyResult = False
-    Cat_trueCount = 0;
-    Cat_falseCount = 0;
-    #  fixed/value/categorical
-    df_cluster = df[[variable, value, fixedcategory]]
+def formQuery(fixed, variable, value, tableName):
+    
+    query = "SELECT " + fixed + ", " + variable + ", avg(" + value + "), stddev(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
+            " GROUP BY " + fixed + ", " + variable + " ORDER BY " + variable
+    return query
 
-    for categoryvalue in categoryvalues:
-        df_clustermean = df_cluster.where(
-            df[fixedcategory] == categoryvalue).groupby([variable, fixedcategory]).mean()
-        # df_clustermean.plot.line(style=['o','rx'])
-        df_clusterstd = df_cluster.where(
-            df[fixedcategory] == categoryvalue).groupby([variable, fixedcategory]).std()
-        # df_clusterstd.plot.line(style=['o','rx'])
-        trueCount = 0;
-        falseCount = 0;
-        for row1 in df_clustermean.iterrows():
-            for row in df_clusterstd.iterrows():
-                if (row1[0][0] == row[0][0]):
-                    mean = row1[1]
-                    std = row[1]
-                    if (std[value] == 0 or  std[value]/mean[value] < .15):
-                        trueCount = trueCount + 1
-                    else:
-                        falseCount = falseCount + 1
+def formQuery2(fixed, value, tableName):
+    
+    query = "SELECT " + fixed + ", avg(" + value + "), stddev(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
+            " GROUP BY " + fixed  + " ORDER BY " + fixed
+    return query
 
-        if (trueCount > falseCount):
+def findConstants(dictFixed, fixed, variable, value):
+    
+    Cat_falseCount = 0
+    Cat_trueCount = 0
+
+    for fixedVar, plotData in dictFixed.items():
+        trueCount = 0
+        falseCount = 0
+        for key in plotData:
+            
+            if (plotData[key] < .15):
+                trueCount = trueCount + 1
+                addPattern(fixed, fixedVar, variable, plotData[key], 'stddev', value, 'constant', plotData[key] )
+            else:
+                falseCount = falseCount + 1
+
+        if(falseCount == 0 or (trueCount/(falseCount+trueCount) > 0.75)) :
             Cat_trueCount = Cat_trueCount + 1
+            addPattern(fixed, fixedVar, variable, "none", 'stddev', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
+
         else:
             Cat_falseCount = Cat_falseCount + 1
-    if (Cat_trueCount > Cat_falseCount):
-        CategotyResult = True
-    return CategotyResult
 
-
-def findCatCorrelation2(value,category):
-    
-    falseCount = 0
-    trueCount = 0   
-    CategotyResult = False
-    df_cluster = df[[ value , category]]
-    
-    df_clustermean = df_cluster.groupby([category]).mean()
-    #df_clustermean.plot.line(style=['o','rx'])
-    df_clusterstd = df_cluster.groupby([category]).std()
-    #df_clusterstd.plot.line(style=['o','rx'])
-    #for keymean,valuemean in df_clustermean.iteritems():
-    
-    for row1 in df_clustermean.iterrows():
-        for row in df_clusterstd.iterrows():
-            if(row1[0] == row[0]):
-                mean = row1[1]
-                std = row[1]
-                if( std[value] == 0 or mean[value]/std[value] < 15):
-                    trueCount = trueCount +1
-                else:
-                    falseCount= falseCount+1    
+    if (Cat_falseCount == 0 or (Cat_trueCount/(Cat_trueCount+Cat_falseCount) >  0.75)):
+        addPattern(fixed, "none", variable, "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
             
-    if((trueCount/falseCount) >0.75):
-        CategotyResult = True
-        
-    return CategotyResult
 
+
+def findConstants2(dictFixed, fixed, value):
+
+    Cat_falseCount = 0
+    Cat_trueCount = 0
+
+    for fixedVar, stddeviation in dictFixed.items():
+        
+        if(stddeviation < 0.15) :
+            Cat_trueCount = Cat_trueCount + 1
+            addPattern(fixed, fixedVar, "none", "none", 'stddev', value, 'constant', stddeviation )
+
+        else:
+            Cat_falseCount = Cat_falseCount + 1
+
+    if (Cat_falseCount == 0 or (Cat_trueCount/(Cat_falseCount+Cat_trueCount) >  0.75)):
+        addPattern(fixed, "none", "none", "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
 
 def correlation(dataset, thresholdpos, thresholdneg):
     col_corr = set()  # Set of all the names of columns
@@ -122,7 +138,7 @@ def heatMap(dimention, value):
     thresholdpos = 0.5
     thresholdneg = -0.5
     df_cluster = df[dimention + value ]
-    # sns.heatmap (df_cluster.corr())
+    sns.heatmap (df_cluster.corr())
     cluster = KMeans(n_clusters=5)
     cluster.fit(df_cluster)
     df_cluster['clusters'] = cluster.labels_
@@ -148,15 +164,14 @@ def heatMap(dimention, value):
                     col_corrHeat_dim.add(colname2)
                 elif (colname2 in value):
                     col_corrHeat_val.add(colname2)
-
     return list(col_corrHeat_dim), list(col_corrHeat_val)
 
 
 conn = psycopg2.connect(dbname='postgres', user='postgres',
                                     host='localhost', password='postgres')
-#df = pd.read_sql_query('select * from stock', con=conn)
-col = ['ticker', 'date', 'month', 'day', 'year','open', 'high', 'low', 'close', 'volume', 'ex-dividend', 'split_ratio', 'adj_open','adj_high', 'adj_low', 'adj_close', 'adj_volume']
-df  = pd.read_csv('/Users/deeptichavan/Downloads/dataAll.csv', names=col) 
+df = pd.read_sql_query('select * from stock', con=conn)
+#col = ['ticker', 'date', 'month', 'day', 'year','open', 'high', 'low', 'close', 'volume', 'ex-dividend', 'split_ratio', 'adj_open','adj_high', 'adj_low', 'adj_close', 'adj_volume']
+#df  = pd.read_csv('/Users/sushmitasinha/Downloads/data55.csv', names=col) 
 
 df.select_dtypes(include=[np.number]).isnull().sum()
 df.replace('n/a', np.nan, inplace=True)
