@@ -1,7 +1,16 @@
+
 import sys
 import psycopg2
+import PatternStore
 import Clustering
 import RegressionGeneralized as reg
+from sqlalchemy import create_engine
+from matplotlib.backends.backend_pdf import PdfPages
+
+
+engine = None
+conn = None
+pdf = PdfPages('PatternsStock.pdf')
 
 class PatternFinder:
     categories = None
@@ -13,29 +22,50 @@ class PatternFinder:
 
     def __init__(self, time, categories, dimensions, values, data):
         try:
+            global conn
             conn = psycopg2.connect(dbname='postgres', user='postgres',
                                     host='localhost', password='postgres')
         except psycopg2.DatabaseError as ex:
             print(ex)
             sys.exit(1)
+
+        try:
+            global engine
+            engine = create_engine(
+                'postgresql://postgres:postgres@localhost:5432/postgres',
+                echo=True)
+        except Exception as ex:
+            print(ex)
+            sys.exit(1)
+
+        
         self.cursor = conn.cursor()
         self.data = data
         self.categories = categories
 
         #for testing
-        #self.values = values
-        #self.dimensions = dimensions+time
+        self.values = values
+        self.dimensions = dimensions+time
         #for testing
 
-        #org
-        reduced_dimensions, reduced_values = Clustering.heatMap(dimensions ,  values )
+    
+        '''
+        #org begin
+        global conn
+        reduced_dimensions, reduced_values = Clustering.Cluster(dimensions,
+                                                                values,
+                                                                self.data,
+                                                                conn)
         print(reduced_dimensions)
         print(reduced_values)
         
         
         self.dimensions = reduced_dimensions + time
         self.values = reduced_values
-        #org
+        #org end
+        '''
+        
+        PatternStore.create_table_object(self.data)
         self.formDatacube()
 
     def findPatterns(self):
@@ -45,34 +75,35 @@ class PatternFinder:
             for val in self.values:
                 self.findConstants2(f, val) 
         
-
-
-        
         print('Dimension:: ', self.dimensions)
         #categories as fixed
         for f in self.categories:
+            
             #categories in variable
             for v in self.categories:
-                    #self.patternList.append(self.findConstant(f, v, val)
-                        #for val in self.values)
-                for val in self.values:
-                    self.findConstants(f, v, val)
+                    self.patternList.append(self.findConstant(f, v, val)
+                                            for val in self.values)
 
             #dimensions in variable
+            '''
             for v in self.dimensions:
                 for val in self.values:
-                    self.findConstants(f, v, val) 
-                    self.findRegressions(f, v, val) 
-                    
+                    self.findRegressions(f, v, "avg",val) 
+            '''
+            
+            v = ['month', 'day']
+            f = ['ticker', 'year']
+            for val in self.values:
+                self.findRegressions(f, v, "avg", val)
 
                     
-                                    
-                '''
-                self.patternList.append(self.findRegressions(f, v, val)
+                                                        
+            '''
+            self.patternList.append(self.findRegressions(f, v, val)
                                         for val in self.values)
-                self.patternList.append(self.findConstants(f, v, val)
+            self.patternList.append(self.findConstants(f, v, val)
                                         for val in self.values)
-                '''
+            '''
 
         #dimensions as fixed
         for f in self.dimensions:
@@ -89,15 +120,22 @@ class PatternFinder:
                 self.patternList.append(self.findConstant(f, v, val)
                                         for val in self.values)
 
-    def findRegressions(self, fixed, variable, value):
-        
-        query = reg.formQuery(fixed, variable, value, self.data)
-        self.cursor.execute(query)
+        #close all database connections
+        global engine
+        engine.dispose()
+        conn.close()
+        pdf.close()
 
+
+    def findRegressions(self, fixed, variable, aggFunc, value):
+        query = reg.formQuery(fixed, variable, aggFunc, value, self.data)
+        self.cursor.execute(query)
+                
         dictFixed = {}
-        reg.formDictionary(self.cursor, dictFixed)
-        reg.fitRegressionModel(dictFixed, fixed, variable, value)
+        reg.formDictionary(self.cursor, dictFixed, fixed, variable)
+        reg.fitRegressionModel(dictFixed, fixed, variable, aggFunc, value)
         return []
+
 
     def findConstants(self, fixed, variable, value):
         query = Clustering.formQuery(fixed, variable, value, self.data)
@@ -115,6 +153,7 @@ class PatternFinder:
         Clustering.formDictionary2(self.cursor, dictFixed)
         Clustering.findConstants2(dictFixed, fixed, value)
         return []
+
 
     def formDatacube(self):
         values_avg_cols = [s+"_avg" for s in self.values]
@@ -158,6 +197,3 @@ class PatternFinder:
                        " GROUP BY CUBE ( "+select+" );"
         print(query_insert)
         # self.cursor.execute(query_insert)
-
-
-        

@@ -26,12 +26,11 @@ import seaborn as sns
 # ##import re
 #import sklearn as sk
 #import sklearn.tree as tree
+
 from sklearn.cluster import KMeans
 
-# from IPython.display import Image
-# ##import pydotplus
+df = None
 
-# from sklearn.tree import DecisionTreeRegressor
 
 def formDictionary(curs, dictFixed):
     
@@ -70,6 +69,16 @@ def formQuery2(fixed, value, tableName):
             " GROUP BY " + fixed  + " ORDER BY " + fixed
     return query
 
+def Cluster(dimensions, values, tablename, conn):
+    global df
+    df = pd.read_sql_query('select * from '+tablename, con=conn)
+
+    df.select_dtypes(include=[np.number]).isnull().sum()
+    df.replace('n/a', np.nan, inplace=True)
+    df.fillna(0.0, inplace=True)
+    df.fillna(0, inplace=True)
+    return heatMap(dimensions, values)
+
 def findConstants(dictFixed, fixed, variable, value):
     
     Cat_falseCount = 0
@@ -82,19 +91,25 @@ def findConstants(dictFixed, fixed, variable, value):
             
             if (plotData[key] < .15):
                 trueCount = trueCount + 1
-                addPattern(fixed, fixedVar, variable, plotData[key], 'stddev', value, 'constant', plotData[key] )
+                #addPattern(fixed, fixedVar, variable, plotData[key], 'stddev', value, 'constant', plotData[key] )
+                addPattern(fixed, fixedVar, variable, 'stddev', value, 'constant', plotData[key] )
+
             else:
                 falseCount = falseCount + 1
 
         if(falseCount == 0 or (trueCount/(falseCount+trueCount) > 0.75)) :
+
             Cat_trueCount = Cat_trueCount + 1
-            addPattern(fixed, fixedVar, variable, "none", 'stddev', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
+            #addPattern(fixed, fixedVar, variable, "none", 'stddev', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
+            addPattern(fixed, fixedVar, variable, 'stddev', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
 
         else:
             Cat_falseCount = Cat_falseCount + 1
 
     if (Cat_falseCount == 0 or (Cat_trueCount/(Cat_trueCount+Cat_falseCount) >  0.75)):
-        addPattern(fixed, "none", variable, "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        #addPattern(fixed, "none", variable, "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        addPattern(fixed, "none", variable, 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+
             
 
 
@@ -107,13 +122,15 @@ def findConstants2(dictFixed, fixed, value):
         
         if(stddeviation < 0.15) :
             Cat_trueCount = Cat_trueCount + 1
-            addPattern(fixed, fixedVar, "none", "none", 'stddev', value, 'constant', stddeviation )
+            #addPattern(fixed, fixedVar, "none", "none", 'stddev', value, 'constant', stddeviation )
+            addPattern(fixed, fixedVar, "none", 'stddev', value, 'constant', stddeviation )
 
         else:
             Cat_falseCount = Cat_falseCount + 1
 
     if (Cat_falseCount == 0 or (Cat_trueCount/(Cat_falseCount+Cat_trueCount) >  0.75)):
-        addPattern(fixed, "none", "none", "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        #addPattern(fixed, "none", "none", "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        addPattern(fixed, "none", "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
 
 def correlation(dataset, thresholdpos, thresholdneg):
     col_corr = set()  # Set of all the names of columns
@@ -134,10 +151,12 @@ def correlation(dataset, thresholdpos, thresholdneg):
 
     return col_corr
 
-def heatMap(dimention, value):
+def heatMap(dimension, value):
     thresholdpos = 0.5
     thresholdneg = -0.5
-    df_cluster = df[dimention + value ]
+    df_cluster = df[dimension + value ]
+    sns.heatmap (df_cluster.corr())
+    df_cluster = df[dimension + value ]
     sns.heatmap (df_cluster.corr())
     cluster = KMeans(n_clusters=5)
     cluster.fit(df_cluster)
@@ -156,11 +175,11 @@ def heatMap(dimention, value):
                 i, j] <= thresholdneg):
                 colname = corr_matrix.columns[i]  # getting the name of column
                 colname2 = corr_matrix.columns[j]  # getting the name of column
-                if(colname in dimention):
+                if(colname in dimension):
                     col_corrHeat_dim.add(colname)
                 elif (colname in value):
                     col_corrHeat_val.add(colname)
-                if(colname2 in dimention):
+                if(colname2 in dimension):
                     col_corrHeat_dim.add(colname2)
                 elif (colname2 in value):
                     col_corrHeat_val.add(colname2)
@@ -213,20 +232,4 @@ CategotyResult = findCatCorrelation2(value,category, categoryvalues)
 
 
   '''
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

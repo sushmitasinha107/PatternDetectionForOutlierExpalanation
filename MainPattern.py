@@ -13,6 +13,7 @@ values = ['open', 'high', 'low' ,'close','volume', 'split_ratio', 'adj_open','ad
 time = ["year", "month"]
 dimensions = []
 categories = ["ticker"]
+tableName = "stock"
 p = PatternFinder(time, categories, dimensions, values, "stock")
 
 p.findPatterns()

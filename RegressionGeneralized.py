@@ -8,17 +8,20 @@ Created on Wed Nov 22 16:05:11 2017
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Pattern import Pattern
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-from matplotlib.backends.backend_pdf import PdfPages
+from PatternStore import addPattern
+import PatternFinder as pf
 
-def formQuery(fixed, variable, value, tableName):
+def formQuery(fixed, variable, aggFunc, value, tableName):
     
-    query = "SELECT " + fixed + ", " + variable + ", avg(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
-            " GROUP BY " + fixed + ", " + variable + " ORDER BY " + variable
+    vStr = ','.join(map(str,variable))
+    fStr = ','.join(map(str,fixed))
     
-    print('Query::', query)
+    query = "SELECT avg(" + value + "), " + fStr + ", " + vStr + "  FROM " + tableName  +\
+            " where ticker = 'AMAT' GROUP BY " + fStr + ", " + vStr + " ORDER BY " + vStr
+    
+    #print('Query::', query)
 
     return query
 
@@ -48,37 +51,63 @@ def plotLinearRegression(x, y, yPltLR, scoreLR, fixed):
     fig.set_size_inches(10.5, 6.5)
     #plt.xlabel('months')
     #plt.ylabel(label)
-    plt.suptitle("State:: " + fixed +  "  Score :: " + str(scoreLR)) 
+    plt.suptitle("Fixed:: " + ','.join(map(str,fixed)) +  "  Score :: " + str(scoreLR)) 
       
     plt.scatter(x,y)
     plt.plot(x, yPltLR, color='navy', linewidth=lw, label='Linear Regressor')
     
     plt.legend(loc='lower right')
-    plt.show()
+    #plt.show()
+    
+    pf.pdf.savefig(fig)
     
     return
 
-def formDictionary(curs, dictFixed):
+def formDictionary(curs, dictFixed, fixed, variable):
     
     for row in curs:
-        fixed = row[0]
-        variable = row[1]
-        agg = row[2]
         
-        if fixed not in dictFixed:
-            dictFixed[fixed] = {}
+        agg = row[0]        #ALWAYS the 0th index value
+        
+        f = ""
+        if(len(fixed) > 1):
+            i = 1
+            while(i <= len(fixed)):
+                f = f + ":" + str(row[i] ) 
+                i = i + 1
+        else:
+            f = row[1]
+            
+        v = ""
+        if(len(variable) > 1):
+            i = len(fixed) + 1
+            while(i <= len(fixed) + len(variable)):
+                v = v + ":" + str(row[i] ) 
+                i = i + 1
+        else:
+            v = row[len(fixed) + 1]
+        
+        
+        if f not in dictFixed:
+            dictFixed[f] = {}
        
-        dictFixed[fixed][variable] = float(agg)
+        dictFixed[f][v] = float(agg)
+        
+        print(dictFixed)
 
 
-def fitRegressionModel(dictFixed, fixed, variable, value):
+def fitRegressionModel(dictFixed, fixed, variable, aggFunc, value):
     
+    validPatterns = 0
     for fixedVar, plotData in dictFixed.items():
     
         x = []
         y = []
+        count = 1
         for key in plotData:
-            x.append(key)
+            #x.append(key)
+            x.append(count)
+            count = count + 1
             y.append(plotData[key])
                         
         
@@ -89,13 +118,16 @@ def fitRegressionModel(dictFixed, fixed, variable, value):
         slopeLR, rmseLR, yPltLR, scoreLR = performLinearRegression(x, y, r)
         
         if(slopeLR > 0 and scoreLR > 0.7):
-            pattern = Pattern(fixed, fixedVar, variable, value, 'increasing', scoreLR)
-            #storePattern(pattern)
+            validPatterns = validPatterns + 1
+            addPattern(fixed, fixedVar, variable, aggFunc, value, 'increasing', scoreLR)
+            plotLinearRegression(x, y, yPltLR, scoreLR, fixedVar)
             
         elif(slopeLR < 0 and scoreLR > 0.7):
-            pattern = Pattern(fixed, fixedVar, variable, value, 'decreasing', scoreLR)
-            #storePattern(pattern)
-            
-        
-        #plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
+            validPatterns = validPatterns + 1
+            addPattern(fixed, fixedVar, variable, aggFunc, value, 'decreasing', scoreLR)
+            plotLinearRegression(x, y, yPltLR, scoreLR, fixedVar)
+                  
+        plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
+    
+    addPattern(fixed, "none", variable, aggFunc, value, "none", (validPatterns * 100 / len(dictFixed)))
         
