@@ -1,6 +1,6 @@
 # PatternDetectionForOutlierExpalanation
 
-##Prerequistes
+## Prerequistes
 * python 3.5
 * sqlalchemy
 * pandas
@@ -10,15 +10,15 @@
 * seaborn
 * psycopg2
 
-##Usage
+## Usage
 
-###PatternFinder
+### PatternFinder
 PatternFinder is the main module which is used to detect patterns
 
 The following methods do the task of verifying the constraints:
 
-*findRegressions()
-*findConstants()
+* findRegressions()
+* findConstants()
 
 findPatterns() tries to enumerate all possible combinations of fixed and variable attributes
 (still need to refine it to support multiple variable and fixed attributes)
