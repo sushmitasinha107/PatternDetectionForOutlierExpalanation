@@ -6,6 +6,7 @@ import PatternFinder as pf
 Pattern = None
 metadata = MetaData()
 
+
 def create_table_object(tablename):
     table_name = tablename+'_patterns'
     table_object = Table(table_name, metadata,
@@ -20,10 +21,6 @@ def create_table_object(tablename):
     )
     global Pattern
     Pattern = table_object
-
-
-def settablename(tablename):
-    Pattern.__tablename__ = tablename+'_patterns'
 
 
 def addPattern(fixed, fixedvalue, variable, aggfunction, aggvalue,
