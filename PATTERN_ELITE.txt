@@ -29,6 +29,26 @@ Build Data-cube on the reduced set of attributes
 
 Fit categorical and regression models using pre-computed aggregate values from the datacube 
 
-Return a list of discovered patterns 
+Return a list of discovered patterns
+
+
+
+Optimizations:
+
+Correlation Analysis:
+Prune unwanted attributes which would not hold any valid pattern.
+This is done by finding correlation coefficient between pairs of attributes thresholded to a value of 0.7
+Further explore patterns in this reduced space of attributes.
+
+Clustering:
+Optimize the process of finding correlation coefficient.
+The dataset contains millions of rows. Computing correlation coefficient over these datapoints is a computationally exhaustive process.
+One optimization to this is forming clusters of the data points and find correlation coefficient using these cluster points.
+
+Data Cube:
+Fitting models over possible groups of attributes involves repeated computation of aggregates.
+These aggregate values are precomputed in the form of a data cube and stored in the database.
+
+
 
 
