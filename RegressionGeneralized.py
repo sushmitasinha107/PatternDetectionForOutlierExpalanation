@@ -93,7 +93,7 @@ def formDictionary(curs, dictFixed, fixed, variable):
        
         dictFixed[f][v] = float(agg)
         
-        print(dictFixed)
+        #print(dictFixed)
 
 
 def fitRegressionModel(dictFixed, fixed, variable, aggFunc, value):

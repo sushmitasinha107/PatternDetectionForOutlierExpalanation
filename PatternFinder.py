@@ -94,7 +94,10 @@ class PatternFinder:
             v = ['month', 'day']
             f = ['ticker', 'year']
             for val in self.values:
-                self.findRegressions(f, v, "avg", val)
+                #self.findRegressions(f, v, "avg", val)
+                self.findConstants(f, v, val)
+
+                
 
                     
                                                         
@@ -140,9 +143,9 @@ class PatternFinder:
     def findConstants(self, fixed, variable, value):
         query = Clustering.formQuery(fixed, variable, value, self.data)
         self.cursor.execute(query)
-                
+        print(query)
         dictFixed = {}
-        Clustering.formDictionary(self.cursor, dictFixed)
+        reg.formDictionary(self.cursor, dictFixed, fixed, variable)
         Clustering.findConstants(dictFixed, fixed, variable, value)
         return []
     
