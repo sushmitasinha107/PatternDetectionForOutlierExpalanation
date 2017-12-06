@@ -31,7 +31,7 @@ from sklearn.cluster import KMeans
 
 df = None
 
-
+'''
 def formDictionary(curs, dictFixed):
     
     for row in curs:
@@ -44,28 +44,75 @@ def formDictionary(curs, dictFixed):
             dictFixed[fixed] = {}
        
         dictFixed[fixed][variable] = float(stdev/mean)
+'''
 
+def formDictionary(curs, dictFixed, fixed, variable):
+    
+    for row in curs:
+        
+        agg = row[0]        #ALWAYS the 0th index value
+
+        
+        f = ""
+        if(len(fixed) > 1):
+            i = 1
+            while(i <= len(fixed)):
+                f = f + ":" + str(row[i] ) 
+                i = i + 1
+        else:
+            f = row[1]
+            
+        v = ""
+        if(len(variable) > 1):
+            i = len(fixed) + 1
+            while(i <= len(fixed) + len(variable)):
+                v = v + ":" + str(row[i] ) 
+                i = i + 1
+        else:
+            v = row[len(fixed) + 1]
+        
+        
+        if f not in dictFixed:
+            dictFixed[f] = {}
+       
+        dictFixed[f][v] = float(agg)
+        
+        #print(dictFixed)
+        
 def formDictionary2(curs, dictFixed):
     
     for row in curs:
         fixed = row[0]
-        mean = row[1]
-        stdev = row[2]
+        agg = row[1]
         
         if fixed not in dictFixed:
             dictFixed[fixed] = {}
        
-        dictFixed[fixed] = float(stdev/mean)
-
+        dictFixed[fixed] = float(agg)
+'''
 def formQuery(fixed, variable, value, tableName):
     
     query = "SELECT " + fixed + ", " + variable + ", avg(" + value + "), stddev(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
             " GROUP BY " + fixed + ", " + variable + " ORDER BY " + variable
     return query
 
+'''
+
+def formQuery(fixed, variable, value, tableName):
+    
+    vStr = ','.join(map(str,variable))
+    fStr = ','.join(map(str,fixed))
+    
+    query = "SELECT stddev_pop(" + value + ")/ avg(" + value +")," + fStr + ", " + vStr + "  FROM " + tableName  +\
+            " where ticker in ('AAPL') GROUP BY " + fStr + ", " + vStr + " ORDER BY " + vStr
+    
+    #print('Query::', query)
+
+    return query
+
 def formQuery2(fixed, value, tableName):
     
-    query = "SELECT " + fixed + ", avg(" + value + "), stddev(" + value + ") FROM " + tableName + " where ticker in ('AAPL', 'MSFT', 'A')" +\
+    query = "SELECT " + fixed + ", stddev_pop(" + value + ")/ avg(" + value + ") FROM " + tableName + " where ticker in ('AAPL')" +\
             " GROUP BY " + fixed  + " ORDER BY " + fixed
     return query
 
@@ -89,10 +136,10 @@ def findConstants(dictFixed, fixed, variable, value):
         falseCount = 0
         for key in plotData:
             
-            if (plotData[key] < .15):
+            if (plotData[key] < .15 and plotData[key]!=0):
                 trueCount = trueCount + 1
                 #addPattern(fixed, fixedVar, variable, plotData[key], 'stddev', value, 'constant', plotData[key] )
-                addPattern(fixed, fixedVar, variable, 'stddev', value, 'constant', plotData[key] )
+                addPattern(fixed, fixedVar, variable, 'stddev1', value, 'constant', plotData[key] )
 
             else:
                 falseCount = falseCount + 1
@@ -101,14 +148,14 @@ def findConstants(dictFixed, fixed, variable, value):
 
             Cat_trueCount = Cat_trueCount + 1
             #addPattern(fixed, fixedVar, variable, "none", 'stddev', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
-            addPattern(fixed, fixedVar, variable, 'stddev', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
+            addPattern(fixed, fixedVar, variable, 'stddev1', value, 'constant', trueCount * 100 /(falseCount+trueCount)  )
 
         else:
             Cat_falseCount = Cat_falseCount + 1
 
     if (Cat_falseCount == 0 or (Cat_trueCount/(Cat_trueCount+Cat_falseCount) >  0.75)):
-        #addPattern(fixed, "none", variable, "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
-        addPattern(fixed, "none", variable, 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        #addPattern(fixed, "none", variable, "none", 'stddev', value, "constant", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        addPattern(fixed, "none", variable, 'stddev1', value, 'constant', (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
 
             
 
@@ -129,8 +176,8 @@ def findConstants2(dictFixed, fixed, value):
             Cat_falseCount = Cat_falseCount + 1
 
     if (Cat_falseCount == 0 or (Cat_trueCount/(Cat_falseCount+Cat_trueCount) >  0.75)):
-        #addPattern(fixed, "none", "none", "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
-        addPattern(fixed, "none", "none", 'stddev', value, "none", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        #addPattern(fixed, "none", "none", "none", 'stddev', value, "constant", (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
+        addPattern(fixed, "none", "none", 'stddev', value, 'constant', (Cat_trueCount * 100 / (Cat_trueCount+Cat_falseCount)))
 
 def correlation(dataset, thresholdpos, thresholdneg):
     col_corr = set()  # Set of all the names of columns
@@ -152,13 +199,13 @@ def correlation(dataset, thresholdpos, thresholdneg):
     return col_corr
 
 def heatMap(dimension, value):
-    thresholdpos = 0.5
+    thresholdpos = 0.7
     thresholdneg = -0.5
     df_cluster = df[dimension + value ]
     sns.heatmap (df_cluster.corr())
     df_cluster = df[dimension + value ]
     sns.heatmap (df_cluster.corr())
-    cluster = KMeans(n_clusters=5)
+    cluster = KMeans(n_clusters=10)
     cluster.fit(df_cluster)
     df_cluster['clusters'] = cluster.labels_
     df_cluster.groupby('clusters').mean()
