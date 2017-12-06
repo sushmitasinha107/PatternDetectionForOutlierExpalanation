@@ -94,7 +94,7 @@ class PatternFinder:
             v = ['month', 'day']
             f = ['ticker', 'year']
             for val in self.values:
-                #self.findRegressions(f, v, "avg", val)
+                self.findRegressions(f, v, "avg", val)
                 self.findConstants(f, v, val)
 
                 
