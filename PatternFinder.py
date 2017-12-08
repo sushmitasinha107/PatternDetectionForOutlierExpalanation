@@ -16,7 +16,6 @@ class PatternFinder:
     categories = None
     dimensions = None
     values = None
-    patternList = []
     cursor = None
     data = None
 
@@ -69,33 +68,50 @@ class PatternFinder:
         self.formDatacube()
 
     def findPatterns(self):
-        
-        for f in self.categories:
-            #categories in variable
-            for val in self.values:
-                self.findConstants2(f, val) 
-        
-        print('Dimension:: ', self.dimensions)
-        #categories as fixed
-        for f in self.categories:
-            
-            #categories in variable
-            for v in self.categories:
-                    self.patternList.append(self.findConstant(f, v, val)
-                                            for val in self.values)
+        dimension_subsets = self.get_subsets(self.dimensions)
+        others = self.categories + self.dimensions
+        others_subsets = self.get_subsets(others)
 
-            #dimensions in variable
-            '''
-            for v in self.dimensions:
-                for val in self.values:
-                    self.findRegressions(f, v, "avg",val) 
-            '''
-            
-            v = ['month', 'day']
-            f = ['ticker', 'year']
-            for val in self.values:
-                self.findRegressions(f, v, "avg", val)
-                self.findConstants(f, v, val)
+        #Regression combinations
+        for f in others_subsets:
+            for v in dimension_subsets:
+                if len(set(f) & set(v)) == 0:
+                    for val in self.values:
+                        self.findRegressions(f, v, "avg", val)
+
+        #Constant combinations:
+        for f in others_subsets:
+            for v in others_subsets:
+                if len(set(f) & set(v)) == 0:
+                    for val in self.values:
+                        self.findConstants(f, v, val)
+
+        # for f in self.categories:
+        #     #categories in variable
+        #     for val in self.values:
+        #         self.findConstants2(f, val)
+        #
+        # print('Dimension:: ', self.dimensions)
+        # #categories as fixed
+        # for f in self.categories:
+        #
+        #     #categories in variable
+        #     for v in self.categories:
+        #             self.patternList.append(self.findConstant(f, v, val)
+        #                                     for val in self.values)
+        #
+        #     #dimensions in variable
+        #     '''
+        #     for v in self.dimensions:
+        #         for val in self.values:
+        #             self.findRegressions(f, v, "avg",val)
+        #     '''
+        #
+        #     v = ['month', 'day']
+        #     f = ['ticker', 'year']
+        #     for val in self.values:
+        #         self.findRegressions(f, v, "avg", val)
+        #         self.findConstants(f, v, val)
 
                 
 
@@ -109,19 +125,19 @@ class PatternFinder:
             '''
 
         #dimensions as fixed
-        for f in self.dimensions:
-            
-            # categories in variable
-            for v in self.categories:
-                self.patternList.append(self.findConstant(f, v, val)
-                                        for val in self.values)
-
-            # dimensions in variable
-            for v in self.dimensions:
-                self.patternList.append(self.findRegressions(f, v, val)
-                                        for val in self.values)
-                self.patternList.append(self.findConstant(f, v, val)
-                                        for val in self.values)
+        # for f in self.dimensions:
+        #
+        #     # categories in variable
+        #     for v in self.categories:
+        #         self.patternList.append(self.findConstant(f, v, val)
+        #                                 for val in self.values)
+        #
+        #     # dimensions in variable
+        #     for v in self.dimensions:
+        #         self.patternList.append(self.findRegressions(f, v, val)
+        #                                 for val in self.values)
+        #         self.patternList.append(self.findConstant(f, v, val)
+        #                                 for val in self.values)
 
         #close all database connections
         global engine
@@ -129,6 +145,25 @@ class PatternFinder:
         conn.close()
         pdf.close()
 
+    def get_subsets(self, l):
+        n = len(l)
+        subsets = []
+        temp = []
+        for i in range(0, pow(2, n)):
+            count = 0
+            for j in range(0, n):
+                if (i & (1 << j)) > 0:
+                    temp.append(l[j])
+                    count = count + 1
+
+                if count == 4:
+                    break
+
+            if len(temp) > 0:
+                subsets.append(temp)
+                temp = []
+
+        return subsets
 
     def findRegressions(self, fixed, variable, aggFunc, value):
         query = reg.formQuery(fixed, variable, aggFunc, value, self.data)
