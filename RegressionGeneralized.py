@@ -21,7 +21,7 @@ def formQuery(fixed, variable, aggFunc, value, tableName):
     query = "SELECT avg(" + value + "), " + fStr + ", " + vStr + "  FROM " + tableName  +\
             " where ticker = 'AMAT' GROUP BY " + fStr + ", " + vStr + " ORDER BY " + vStr
     
-    #print('Query::', query)
+    # print('Query::', query)
 
     return query
 
@@ -117,17 +117,19 @@ def fitRegressionModel(dictFixed, fixed, variable, aggFunc, value):
         
         slopeLR, rmseLR, yPltLR, scoreLR = performLinearRegression(x, y, r)
         
-        if(slopeLR > 0 and scoreLR > 0.7):
+        if slopeLR > 0 and scoreLR > 0.7:
             validPatterns = validPatterns + 1
-            addPattern(fixed, fixedVar, variable, aggFunc, value, 'increasing', scoreLR)
+            addPattern(fixed, fixedVar, variable, aggFunc, value,
+                       'increasing', scoreLR)
             plotLinearRegression(x, y, yPltLR, scoreLR, fixedVar)
             
-        elif(slopeLR < 0 and scoreLR > 0.7):
+        elif slopeLR < 0 and scoreLR > 0.7:
             validPatterns = validPatterns + 1
-            addPattern(fixed, fixedVar, variable, aggFunc, value, 'decreasing', scoreLR)
+            addPattern(fixed, fixedVar, variable, aggFunc, value,
+                       'decreasing', scoreLR)
             plotLinearRegression(x, y, yPltLR, scoreLR, fixedVar)
                   
         plotLinearRegression(x, y, yPltLR, scoreLR, fixed)
     
-    addPattern(fixed, "none", variable, aggFunc, value, "none", (validPatterns * 100 / len(dictFixed)))
-        
+    addPattern(fixed, None, variable, aggFunc, value, None,
+               (validPatterns * 100 / len(dictFixed)))

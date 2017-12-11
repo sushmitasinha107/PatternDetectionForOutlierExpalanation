@@ -3,6 +3,7 @@ import sys
 import psycopg2
 import PatternStore
 import Clustering
+import LeastDispersion
 import RegressionGeneralized as reg
 from sqlalchemy import create_engine
 from matplotlib.backends.backend_pdf import PdfPages
@@ -37,18 +38,17 @@ class PatternFinder:
             print(ex)
             sys.exit(1)
 
-        
         self.cursor = conn.cursor()
         self.data = data
         self.categories = categories
 
         #for testing
-        self.values = values
-        self.dimensions = dimensions+time
+        # self.values = values
+        # self.dimensions = dimensions+time
         #for testing
 
     
-        '''
+
         #org begin
         global conn
         reduced_dimensions, reduced_values = Clustering.Cluster(dimensions,
@@ -57,13 +57,11 @@ class PatternFinder:
                                                                 conn)
         print(reduced_dimensions)
         print(reduced_values)
-        
-        
+
         self.dimensions = reduced_dimensions + time
         self.values = reduced_values
         #org end
-        '''
-        
+
         PatternStore.create_table_object(self.data)
         self.formDatacube()
 
@@ -85,59 +83,6 @@ class PatternFinder:
                 if len(set(f) & set(v)) == 0:
                     for val in self.values:
                         self.findConstants(f, v, val)
-
-        # for f in self.categories:
-        #     #categories in variable
-        #     for val in self.values:
-        #         self.findConstants2(f, val)
-        #
-        # print('Dimension:: ', self.dimensions)
-        # #categories as fixed
-        # for f in self.categories:
-        #
-        #     #categories in variable
-        #     for v in self.categories:
-        #             self.patternList.append(self.findConstant(f, v, val)
-        #                                     for val in self.values)
-        #
-        #     #dimensions in variable
-        #     '''
-        #     for v in self.dimensions:
-        #         for val in self.values:
-        #             self.findRegressions(f, v, "avg",val)
-        #     '''
-        #
-        #     v = ['month', 'day']
-        #     f = ['ticker', 'year']
-        #     for val in self.values:
-        #         self.findRegressions(f, v, "avg", val)
-        #         self.findConstants(f, v, val)
-
-                
-
-                    
-                                                        
-            '''
-            self.patternList.append(self.findRegressions(f, v, val)
-                                        for val in self.values)
-            self.patternList.append(self.findConstants(f, v, val)
-                                        for val in self.values)
-            '''
-
-        #dimensions as fixed
-        # for f in self.dimensions:
-        #
-        #     # categories in variable
-        #     for v in self.categories:
-        #         self.patternList.append(self.findConstant(f, v, val)
-        #                                 for val in self.values)
-        #
-        #     # dimensions in variable
-        #     for v in self.dimensions:
-        #         self.patternList.append(self.findRegressions(f, v, val)
-        #                                 for val in self.values)
-        #         self.patternList.append(self.findConstant(f, v, val)
-        #                                 for val in self.values)
 
         #close all database connections
         global engine
@@ -176,22 +121,21 @@ class PatternFinder:
 
 
     def findConstants(self, fixed, variable, value):
-        query = Clustering.formQuery(fixed, variable, value, self.data)
+        query = LeastDispersion.formQuery(fixed, variable, value, self.data)
         self.cursor.execute(query)
         print(query)
         dictFixed = {}
         reg.formDictionary(self.cursor, dictFixed, fixed, variable)
-        Clustering.findConstants(dictFixed, fixed, variable, value)
+        LeastDispersion.findConstants(dictFixed, fixed, variable, value)
         return []
     
     def findConstants2(self, fixed, value):
-        query = Clustering.formQuery2(fixed, value, self.data)
+        query = LeastDispersion.formQuery2(fixed, value, self.data)
         self.cursor.execute(query)                
         dictFixed = {}
-        Clustering.formDictionary2(self.cursor, dictFixed)
-        Clustering.findConstants2(dictFixed, fixed, value)
+        LeastDispersion.formDictionary2(self.cursor, dictFixed)
+        LeastDispersion.findConstants2(dictFixed, fixed, value)
         return []
-
 
     def formDatacube(self):
         values_avg_cols = [s+"_avg" for s in self.values]
@@ -219,8 +163,9 @@ class PatternFinder:
                              dimensions_str+", " +\
                              values_avg+", " +\
                              values_std+" );"
-        print(query_create_table)
-        # self.cursor.execute(query_create_table)
+        # print(query_create_table)
+        self.cursor.execute(query_create_table)
+        conn.commit()
 
         #Insert into datacube table
         insert_list = self.categories + self.dimensions + \
@@ -233,5 +178,7 @@ class PatternFinder:
         query_insert = "INSERT INTO "+self.data+"_datacube ( "+insert+\
                        " ) SELECT "+select+","+avg+","+std+" FROM "+self.data+\
                        " GROUP BY CUBE ( "+select+" );"
-        print(query_insert)
-        # self.cursor.execute(query_insert)
+        # print(query_insert)
+        self.cursor.execute(query_insert)
+        conn.commit()
+
