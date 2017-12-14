@@ -13,20 +13,37 @@ from sklearn.metrics import mean_squared_error
 from PatternStore import addPattern
 import PatternFinder as pf
 
-def formQuery(fixed, variable, aggFunc, value, tableName):
+
+def formQuery(fixed, variable, aggFunc, value, tableName, all):
     
-    vStr = ','.join(map(str,variable))
-    fStr = ','.join(map(str,fixed))
-    
-    query = "SELECT avg(" + value + "), " + fStr + ", " + vStr + "  FROM " + tableName  +\
-            " where ticker = 'AMAT' GROUP BY " + fStr + ", " + vStr + " ORDER BY " + vStr
-    
+    vStr = ','.join(map(str, variable))
+    fStr = ','.join(map(str, fixed))
+
+    vCond = ' is not null and '.join(map(str, variable))
+    fCond = ' is not null and '.join(map(str, fixed))
+
+    for v in variable:
+        all.remove(v)
+
+    for f in fixed:
+        all.remove(f)
+
+    allCond = ' is null and '.join(all)
+
+    # query = "SELECT " + aggFunc + "_" + value + ", " + fStr + ", " + vStr +
+    # "  FROM " + tableName+"_datacube" +" where " + fStr + ", " + vStr +
+    #  " ORDER BY " + vStr
+
+    query = "SELECT "+value+"_"+aggFunc+","+fStr+","+vStr+" FROM "+tableName+\
+            "_datacube WHERE "+vCond+" is not null and "+fCond+\
+            " is not null and "+allCond+" is null ORDER BY "+vStr
+
     # print('Query::', query)
 
     return query
 
 
-def performLinearRegression(x ,y, r):
+def performLinearRegression(x, y, r):
     
     lr = LinearRegression(normalize=True)
     lr.fit(x,y)
@@ -43,6 +60,7 @@ def performLinearRegression(x ,y, r):
     rmse = np.sqrt(mse)
         
     return float(slope), rmse, ytest, scoreLR
+
 
 def plotLinearRegression(x, y, yPltLR, scoreLR, fixed):
     
@@ -62,6 +80,7 @@ def plotLinearRegression(x, y, yPltLR, scoreLR, fixed):
     pf.pdf.savefig(fig)
     
     return
+
 
 def formDictionary(curs, dictFixed, fixed, variable):
     

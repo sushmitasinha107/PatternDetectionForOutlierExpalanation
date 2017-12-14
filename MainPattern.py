@@ -17,4 +17,8 @@ categories = ["ticker"]
 tableName = "stock"
 p = PatternFinder(time, categories, dimensions, values, "stock")
 
-p.findPatterns()
+# p.findPatterns()
+
+fixed = ["ticker"]
+variable = ["year"]
+p.findRegressions(fixed, variable, "avg", "open", )

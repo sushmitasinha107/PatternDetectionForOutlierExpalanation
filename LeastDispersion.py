@@ -1,5 +1,6 @@
 from PatternStore import addPattern
 
+
 def formDictionary(curs, dictFixed, fixed, variable):
     for row in curs:
 
@@ -42,21 +43,42 @@ def formDictionary2(curs, dictFixed):
         dictFixed[fixed] = float(agg)
 
 
-def formQuery(fixed, variable, value, tableName):
+def formQuery(fixed, variable, value, tableName, all):
     vStr = ','.join(map(str, variable))
     fStr = ','.join(map(str, fixed))
 
-    query = "SELECT stddev_pop(" + value + ")/ avg(" + value + ")," + fStr + ", " + vStr + "  FROM " + tableName + \
-            " where ticker in ('AAPL') GROUP BY " + fStr + ", " + vStr + " ORDER BY " + vStr
+    vCond = ' is not null and '.join(map(str, variable))
+    fCond = ' is not null and '.join(map(str, fixed))
+
+    for v in variable:
+        all.remove(v)
+
+    for f in fixed:
+        all.remove(f)
+
+    allCond = ' is null and '.join(all)
+
+    query = "SELECT "+value+"_std / "+value+"_avg,"+fStr+","+vStr+" FROM "+\
+            tableName+"_datacube WHERE "+vCond+" is not null and "+fCond+\
+            " is not null and "+allCond+" is null ORDER BY " + vStr
 
     # print('Query::', query)
 
     return query
 
 
-def formQuery2(fixed, value, tableName):
-    query = "SELECT " + fixed + ", stddev_pop(" + value + ")/ avg(" + value + ") FROM " + tableName + " where ticker in ('AAPL')" + \
-            " GROUP BY " + fixed + " ORDER BY " + fixed
+def formQuery2(fixed, value, tableName, all):
+    fStr = ','.join(map(str, fixed))
+    fCond = ' is not null and '.join(map(str, fixed))
+
+    for f in fixed:
+        all.remove(f)
+
+    allCond = ' is null and '.join(all)
+
+    query = "SELECT "+fixed+", "+value+"_std / "+value+"_avg FROM "+\
+            tableName+"_datacube WHERE "+fCond+" is not null and "+\
+            allCond+" is null ORDER BY " + fStr
     return query
 
 

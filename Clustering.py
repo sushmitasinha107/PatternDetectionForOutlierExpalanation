@@ -15,7 +15,6 @@ This is a temporary script file.
 import pandas as pd 
 import numpy as np
 import psycopg2
-import seaborn as sns
 
 from sklearn.cluster import KMeans
 

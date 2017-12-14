@@ -111,9 +111,10 @@ class PatternFinder:
         return subsets
 
     def findRegressions(self, fixed, variable, aggFunc, value):
-        query = reg.formQuery(fixed, variable, aggFunc, value, self.data)
+        query = reg.formQuery(fixed, variable, aggFunc, value, self.data,
+                              self.categories+self.dimensions)
         self.cursor.execute(query)
-                
+
         dictFixed = {}
         reg.formDictionary(self.cursor, dictFixed, fixed, variable)
         reg.fitRegressionModel(dictFixed, fixed, variable, aggFunc, value)
@@ -121,7 +122,8 @@ class PatternFinder:
 
 
     def findConstants(self, fixed, variable, value):
-        query = LeastDispersion.formQuery(fixed, variable, value, self.data)
+        query = LeastDispersion.formQuery(fixed, variable, value, self.data,
+                                          self.dimensions + self.categories)
         self.cursor.execute(query)
         print(query)
         dictFixed = {}
@@ -130,7 +132,8 @@ class PatternFinder:
         return []
     
     def findConstants2(self, fixed, value):
-        query = LeastDispersion.formQuery2(fixed, value, self.data)
+        query = LeastDispersion.formQuery2(fixed, value, self.data,
+                                           self.dimensions + self.categories)
         self.cursor.execute(query)                
         dictFixed = {}
         LeastDispersion.formDictionary2(self.cursor, dictFixed)
